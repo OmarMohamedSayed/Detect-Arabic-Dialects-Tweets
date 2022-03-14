@@ -2,52 +2,12 @@ from flask import Flask, request,jsonify, make_response
 import pickle
 import numpy as np
 import joblib
-import unicodedata
-import re
+from datapreprocessing import text_preprocessing
+from NN_predict import ml_predictor, CustomAraBERTModel
 
 app = Flask(__name__, template_folder = 'template')
 
-def text_preprocessing(text):
-    """
-    - Remove entity mentions (eg. '@united')
-    - Remove entity emoji (eg. '🌺')
-    - Correct errors (eg. '&amp;' to '&')
-    @param    text (str): a string to be processed.
-    @return   text (Str): the processed string.
-    """
-    # Normalize unicode encoding
-    text = unicodedata.normalize('NFC', text)
-    # Remove '@name'
-    text = re.sub(r'(@.*?)[\s]', ' ', text)
-    # Replace '&amp;' with '&'
-    text = re.sub(r'&amp;', '&', text)
-    # Remove trailing whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
-    #Remove URLs
-    text = re.sub(r'^https?:\/\/.*[\r\n]*', '<URL>', text)
-    #Remove Emoji
-    text = re.sub(re.compile("["
-        u"\U0001F600-\U0001F64F"  # emoticons
-        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-        u"\U0001F680-\U0001F6FF"  # transport & map symbols
-        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-        u"\U00002500-\U00002BEF"  # chinese char
-        u"\U00002702-\U000027B0"
-        u"\U00002702-\U000027B0"
-        u"\U000024C2-\U0001F251"
-        u"\U0001f926-\U0001f937"
-        u"\U00010000-\U0010ffff"
-        u"\u2640-\u2642" 
-        u"\u2600-\u2B55"
-        u"\u200d"
-        u"\u23cf"
-        u"\u23e9"
-        u"\u231a"
-        u"\ufe0f"  # dingbats
-        u"\u3030""]+", re.UNICODE),'',text)
-    return text
-
-def dialectPredictor(text, model_name):
+def dialect_predictor(text, model_name):
     clean_text = []
     predict_classes = []
     loaded_model = joblib.load(f'{model_name}.joblib')
@@ -61,25 +21,41 @@ def dialectPredictor(text, model_name):
         predict_classes.append(class_label[i])
     return predict_classes
 
+@app.route('/modern_nn/', methods = ['POST'])
+def model_NN():
+    # ml_predictor()
+    if request.method == 'POST':
+        try:
+            request_data = request.get_json()
+            text = request_data['tweet']
+            
+            result = ml_predictor(text)
+            return make_response(jsonify({'dialect':result}), 200)
+        except:
+            return make_response({
+                "error":"please check the parameters",
+            },400)
 
 @app.route('/classic_ml/', methods = ['POST'])
-def classicMl():
+def classic_Ml():
     if request.method == 'POST':
         try:
             request_data = request.get_json()
             alg_name = request_data['alg_name']
             text = request_data['tweet']
             if alg_name=="" or alg_name=="svm":
-                result = dialectPredictor(list(text),'svm_model')
+                result = dialect_predictor(list(text),'svm_model')
                 print(result)
             elif alg_name=="naive":
-                result = dialectPredictor(text,'naive_bayes_model')
+                result = dialect_predictor(text,'naive_bayes_model')
 
             return make_response(jsonify({'dialect':result}), 200)
         except:
             return make_response({
                 "error":"please check the parameters",
             },400)
+
+
 
 if __name__ == '__main__':
     app.run(port=5001)

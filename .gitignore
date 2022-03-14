@@ -1,2 +1,5 @@
 venv
 venv/**
+arabert_dialect.pth
+**.pyc
+output.json
