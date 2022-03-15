@@ -63,7 +63,7 @@ I compared with three Algorithm:
 |            Model                         | Sentiment acc. |
 | ---------------------------------------- |:--------------:|
 | SVM                                      |      55 %      |
-| Naive Bayes                              |      44 %      |
+| Naive Bayes                              |      40 %      |
 | Deep Learning (Pretrained-model)         |      77 %      |
 
 </center>
