@@ -43,11 +43,15 @@ Then, run model.py to create train models and save it
 python3 model.py
 ```
 
-
 Then, run app.py to run server :
 
 ```bash
 python3 app.py
+```
+then, can import postman collection with all requests
+
+```bash
+dialect_collection.postman_collection.json
 ```
 
 ## Evaluation
